@@ -1,7 +1,9 @@
 export const GRID = {
   COLS: 6,
   ROWS: 3,
-  TILE_SIZE: 80,
+  TILE_WIDTH: 70,   // Width of each tile
+  TILE_HEIGHT: 50,  // Height of each tile (shorter for perspective)
+  TILE_DEPTH: 25,   // Depth for isometric effect
   PLAYER_COLS: 3,
   ENEMY_COLS: 3,
 } as const;
