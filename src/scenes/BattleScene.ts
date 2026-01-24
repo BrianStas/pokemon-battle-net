@@ -10,6 +10,8 @@ export class BattleScene extends Phaser.Scene {
   private enemySprite!: Phaser.GameObjects.Sprite;
   private gridOffsetX: number = 0;
   private gridOffsetY: number = 0;
+
+  //making a comment
   
   // Store player Pokemon across rounds
   private static playerPokemonName: string = 'Pikachu';
