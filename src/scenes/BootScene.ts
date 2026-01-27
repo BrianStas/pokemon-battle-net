@@ -48,7 +48,6 @@ export class BootScene extends Phaser.Scene {
       playerPower: 1.0,
     };
     
-    this.registry.set('gameProgress', initialProgress);
     this.showTitleScreen();
   }
 
@@ -108,8 +107,8 @@ export class BootScene extends Phaser.Scene {
     instructions.setOrigin(0.5);
 
     this.input.keyboard?.once('keydown-SPACE', () => {
-      console.log('🎮 Starting first battle!');
-      this.scene.start('BattleScene');
+      console.log('🎮 Going to character select!');
+      this.scene.start('CharacterSelectScene'); // Changed from 'BattleScene'
     });
   }
 }

@@ -3,6 +3,7 @@ import { GAME } from '@/utils/constants';
 import { BootScene } from '@/scenes/BootScene';
 import { BattleScene } from '@/scenes/BattleScene';
 import { RewardScene } from '@/scenes/RewardScene';
+import { CharacterSelectScene } from '@/scenes/CharacterSelectScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -10,7 +11,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   width: GAME.WIDTH,
   height: GAME.HEIGHT,
   backgroundColor: GAME.BACKGROUND_COLOR,
-  scene: [BootScene, BattleScene, RewardScene],
+  scene: [BootScene, CharacterSelectScene, BattleScene, RewardScene],
   physics: {
     default: 'arcade',
     arcade: {
