@@ -29,7 +29,6 @@ export class BattleScene extends Phaser.Scene {
   preload() {
     console.log('🔄 Loading Pokemon sprites...');
     
-    // Load all 20 Pokemon sprites
     POKEMON_SPRITES.forEach(pokemon => {
       // Load static sprite as fallback
       this.load.image(
@@ -37,7 +36,7 @@ export class BattleScene extends Phaser.Scene {
         pokemon.spriteUrl
       );
       
-      // Try to load animated version (some might not exist for newer gens)
+      // Try to load animated version
       if (pokemon.animatedUrl) {
         this.load.image(
           `pokemon-${pokemon.name.toLowerCase()}-animated`,
@@ -46,7 +45,6 @@ export class BattleScene extends Phaser.Scene {
       }
     });
     
-    // Show loading progress
     this.load.on('progress', (value: number) => {
       console.log(`Loading: ${Math.floor(value * 100)}%`);
     });
@@ -82,13 +80,10 @@ export class BattleScene extends Phaser.Scene {
       }
     );
 
-    // Create the battle grid
     this.createBattleGrid();
     
-    // Create the Pokemon sprites on the grid
     this.createPokemonSprites();
     
-    // Setup keyboard controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     
     // Update instructions text
