@@ -137,8 +137,6 @@ export class BattleScene extends Phaser.Scene {
           GRID.TILE_WIDTH - 4, 
           GRID.TILE_HEIGHT - 4
         );
-
-        //kicking rock currently
         
         // Only draw depth for BOTTOM ROW (row 2)
         if (row === GRID.ROWS - 1) {
