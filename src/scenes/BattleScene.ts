@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GRID, COLORS, MOVEMENT } from '@/utils/constants';
 import { GameProgress } from '@/types';
 import { POKEMON_SPRITES, getRandomPokemon } from '@/data/pokemonSprites';
+import { Projectile } from '@/entities/Projectile';
 
 export class BattleScene extends Phaser.Scene {
   private gameProgress!: GameProgress;
@@ -18,6 +19,12 @@ export class BattleScene extends Phaser.Scene {
   private isPlayerMoving: boolean = false;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private playerIdleTween!: Phaser.Tweens.Tween;
+  private attackKey!: Phaser.Input.Keyboard.Key;
+  private projectiles!: Phaser.Physics.Arcade.Group;
+  private canAttack: boolean = true;
+  private attackCooldown: number = 500; // 500ms cooldown between attacks
+  private enemyHP: number = 100;
+  private enemyMaxHP: number = 100;
   
   // Store player Pokemon across rounds
   private static playerPokemonName: string = '';
@@ -44,6 +51,8 @@ export class BattleScene extends Phaser.Scene {
         );
       }
     });
+
+    this.createProjectileSprite();
     
     this.load.on('progress', (value: number) => {
       console.log(`Loading: ${Math.floor(value * 100)}%`);
@@ -83,6 +92,8 @@ export class BattleScene extends Phaser.Scene {
     this.createBattleGrid();
     
     this.createPokemonSprites();
+
+    this.setupCombat();
     
     this.cursors = this.input.keyboard!.createCursorKeys();
     
@@ -90,7 +101,7 @@ export class BattleScene extends Phaser.Scene {
     const instructions = this.add.text(
       this.cameras.main.centerX,
       550,
-      'Arrow Keys: Move | ENTER: Next Round',
+      'Arrow Keys: Move | Z: Attack | ENTER: Next Round',  // Updated text
       {
         fontSize: '18px',
         color: '#2ecc71',
@@ -194,6 +205,12 @@ export class BattleScene extends Phaser.Scene {
     // Use stored player Pokemon (stays across rounds)
     const playerSpriteKey = `pokemon-${BattleScene.playerPokemonName.toLowerCase()}`;
     this.playerSprite = this.add.sprite(playerX, playerY, playerSpriteKey);
+
+    this.physics.add.existing(this.playerSprite);
+    (this.playerSprite.body as Phaser.Physics.Arcade.Body).setSize(
+      this.playerSprite.width * 0.6,
+      this.playerSprite.height * 0.6
+    );
     
     // Scale and flip - Player faces RIGHT
     this.playerSprite.setScale(1.875);
@@ -240,6 +257,12 @@ export class BattleScene extends Phaser.Scene {
     const enemyPokemon = getRandomPokemon();
     const enemySpriteKey = `pokemon-${enemyPokemon.name.toLowerCase()}`;
     this.enemySprite = this.add.sprite(enemyX, enemyY, enemySpriteKey);
+
+    this.physics.add.existing(this.enemySprite);
+    (this.enemySprite.body as Phaser.Physics.Arcade.Body).setSize(
+      this.enemySprite.width * 0.6,  // Hitbox slightly smaller than sprite
+      this.enemySprite.height * 0.6
+    );
     
     // Scale and flip - Enemy faces LEFT
     this.enemySprite.setScale(1.875);
@@ -277,6 +300,154 @@ export class BattleScene extends Phaser.Scene {
     (this.enemySprite as any).nameLabel = enemyLabel;
     
     console.log(`✅ Sprites facing each other: ${BattleScene.playerPokemonName} → ← ${enemyPokemon.name}`);
+  }
+
+  private createProjectileSprite() {
+    // Create a simple circle graphic for the projectile
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffff00, 1); // Yellow ball
+    graphics.fillCircle(8, 8, 8); // 16x16 circle
+    graphics.lineStyle(2, 0xffffff, 1);
+    graphics.strokeCircle(8, 8, 8);
+    
+    graphics.generateTexture('projectile', 16, 16);
+    graphics.destroy();
+  }
+
+  private setupCombat() {
+    // Create projectile group
+    this.projectiles = this.physics.add.group({
+      classType: Projectile,
+      maxSize: 10,
+      runChildUpdate: true,
+    });
+
+    // Setup collision between projectiles and enemy
+    this.physics.add.overlap(
+      this.projectiles,
+      this.enemySprite,
+      this.hitEnemy,
+      undefined,
+      this
+    );
+
+    // Setup attack key (Z key)
+    this.attackKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+  }
+
+      private shootProjectile() {
+    if (!this.canAttack) return;
+
+    // Get player sprite's actual visual position (not grid calculation)
+    const playerX = this.playerSprite.x;
+    const playerY = this.playerSprite.y - 50; // Spawn at center of sprite (not feet)
+
+    // Create projectile at player position
+    const projectile = new Projectile(this, playerX, playerY, 10);
+    this.projectiles.add(projectile);
+
+    // Fire projectile to the right
+    projectile.fire(400, 0); // 400 pixels/second to the right
+
+    // Play simple beep sound
+    this.createSimpleSound(800, 0.1, 0.3); // 800Hz beep
+
+    // Set cooldown
+    this.canAttack = false;
+    this.time.delayedCall(this.attackCooldown, () => {
+      this.canAttack = true;
+    });
+
+    // Destroy projectile if it goes off screen
+    this.time.delayedCall(2000, () => {
+      if (projectile.active) {
+        projectile.destroy();
+      }
+    });
+
+    console.log('💥 Projectile fired!');
+  }
+
+  private hitEnemy(projectileObj: any, enemyObj: any) {
+    const projectile = projectileObj as Projectile;
+    projectile.destroy();
+
+    const damage = projectile.getDamage();
+    this.enemyHP = Math.max(0, this.enemyHP - damage);
+
+    console.log(`🎯 Hit! Enemy HP: ${this.enemyHP}/${this.enemyMaxHP}`);
+
+    // Play hit sound
+    this.createSimpleSound(400, 0.15, 0.5); // 400Hz thud
+
+    this.blinkSprite(this.enemySprite);
+    this.showDamageNumber(this.enemySprite.x, this.enemySprite.y - 60, damage);
+
+    if (this.enemyHP <= 0) {
+      console.log('💀 Enemy defeated!');
+      this.time.delayedCall(1000, () => {
+        this.scene.start('RewardScene');
+      });
+    }
+  }
+
+  private blinkSprite(sprite: Phaser.GameObjects.Sprite) {
+    // Blink 3 times
+    this.tweens.add({
+      targets: sprite,
+      alpha: 0,
+      duration: 100,
+      yoyo: true,
+      repeat: 5, // 3 full blinks (off-on-off-on-off-on)
+      onComplete: () => {
+        sprite.setAlpha(1); // Ensure it's visible at the end
+      }
+    });
+  }
+
+  private showDamageNumber(x: number, y: number, damage: number) {
+    const damageText = this.add.text(x, y, `-${damage}`, {
+      fontSize: '32px',
+      color: '#ff0000',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    });
+    damageText.setOrigin(0.5);
+    damageText.setDepth(100);
+
+    // Float up and fade out
+    this.tweens.add({
+      targets: damageText,
+      y: y - 50,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        damageText.destroy();
+      }
+    });
+  }
+
+  private createSimpleSound(frequency: number, duration: number, volume: number = 0.3) {
+    // Create a simple beep sound using Web Audio API
+    const audioContext = (this.sound as any).context;
+    if (!audioContext) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'square';
+
+    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
   }
 
   private movePlayer(deltaX: number, deltaY: number) {
@@ -351,6 +522,10 @@ export class BattleScene extends Phaser.Scene {
       } else if (Phaser.Input.Keyboard.JustDown(this.cursors.down!)) {
         this.movePlayer(0, 1);
       }
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
+      this.shootProjectile();
     }
     
     // Press ENTER to go to next round

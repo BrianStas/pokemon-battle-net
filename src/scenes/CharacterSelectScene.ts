@@ -124,10 +124,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.updateSelection();
   }
 
-  private createPokemonGrid() {
+    private createPokemonGrid() {
     const cols = 5;
     const rows = 4;
-    const iconSize = 40;
     const spacing = 80;
     const startX = 380;
     const startY = 150;
@@ -145,7 +144,9 @@ export class CharacterSelectScene extends Phaser.Scene {
         y,
         `pokemon-icon-${pokemon.name.toLowerCase()}`
       );
-      icon.setScale(2); // Scale up the small icon
+      
+      // Set consistent display size using displayWidth/displayHeight
+      icon.setDisplaySize(48, 48); // Force all icons to be 48x48 pixels
       icon.setOrigin(0.5);
       
       this.pokemonIcons.push(icon);
@@ -155,7 +156,7 @@ export class CharacterSelectScene extends Phaser.Scene {
   private createSelectionBox() {
     this.selectionBox = this.add.graphics();
     this.selectionBox.lineStyle(3, 0x2ecc71, 1);
-    this.selectionBox.strokeRect(-25, -25, 50, 50);
+    this.selectionBox.strokeRect(-28, -28, 56, 56); // Slightly bigger than 48x48 icons
     this.selectionBox.setDepth(100);
   }
 
@@ -167,20 +168,20 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.selectionBox.setPosition(icon.x, icon.y);
     
     // Reset all icons to normal
-    this.pokemonIcons.forEach((s, i) => {
-      s.setScale(2);
+    this.pokemonIcons.forEach((s) => {
+      s.setDisplaySize(48, 48);  // Normal size
       s.setAlpha(0.6);
     });
     
     // Highlight selected icon
-    icon.setScale(2.3);
+    icon.setDisplaySize(52, 52);  // Slightly bigger
     icon.setAlpha(1);
     
     // Pulse animation on selected
     this.tweens.add({
       targets: icon,
-      scaleX: 2.5,
-      scaleY: 2.5,
+      displayWidth: 56,
+      displayHeight: 56,
       duration: 200,
       yoyo: true,
       ease: 'Sine.easeInOut',
@@ -192,18 +193,18 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
     
     this.previewSprite = this.add.sprite(
-      170,
-      300,
+      170,           // Centered in preview box
+      380,           // Lower position (was 300)
       `pokemon-${pokemon.name.toLowerCase()}`
     );
-    this.previewSprite.setScale(3.5); // Large preview
-    this.previewSprite.setFlipX(true); // Face right like in battle
-    this.previewSprite.setOrigin(0.5, 1);
+    this.previewSprite.setScale(2.5);  // Smaller scale (was 3.5)
+    this.previewSprite.setFlipX(true);
+    this.previewSprite.setOrigin(0.5, 1); // Bottom-center anchor
     
     // Idle bounce animation for preview
     this.tweens.add({
       targets: this.previewSprite,
-      y: 290,
+      y: 370,        // Bounce range adjusted
       duration: 1000,
       yoyo: true,
       repeat: -1,
@@ -217,10 +218,10 @@ export class CharacterSelectScene extends Phaser.Scene {
     
     this.previewNameText = this.add.text(
       170,
-      350,
+      420,          // Below the sprite (was 350)
       pokemon.name,
       {
-        fontSize: '28px',
+        fontSize: '24px',  // Slightly smaller (was 28px)
         color: '#ffffff',
         fontStyle: 'bold',
         stroke: '#000000',
@@ -236,7 +237,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     
     this.previewIdText = this.add.text(
       170,
-      380,
+      450,          // Below the name (was 380)
       `#${pokemon.id.toString().padStart(3, '0')}`,
       {
         fontSize: '18px',
