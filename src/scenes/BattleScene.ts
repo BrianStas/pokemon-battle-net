@@ -140,6 +140,8 @@ export class BattleScene extends Phaser.Scene {
           borderColor = 0xf57c7c; // Lighter red border
         }
 
+        //got it for at least today
+
         // Draw the main tile face (top surface)
         this.gridGraphics.fillStyle(color, 0.7);
         this.gridGraphics.fillRect(
