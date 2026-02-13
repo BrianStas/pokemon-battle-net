@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GRID, COLORS, MOVEMENT } from '@/utils/constants';
 import { GameProgress } from '@/types';
 import { POKEMON_SPRITES, getRandomPokemon } from '@/data/pokemonSprites';
-import { Projectile } from '@/entities/Projectile';
 
 export class BattleScene extends Phaser.Scene {
   private gameProgress!: GameProgress;
@@ -258,19 +257,24 @@ export class BattleScene extends Phaser.Scene {
     
     const enemyPokemon = getRandomPokemon();
     const enemySpriteKey = `pokemon-${enemyPokemon.name.toLowerCase()}`;
-    this.enemySprite = this.add.sprite(enemyX, enemyY, enemySpriteKey);
-
-    this.physics.add.existing(this.enemySprite);
-    (this.enemySprite.body as Phaser.Physics.Arcade.Body).setSize(
-      this.enemySprite.width * 0.6,  // Hitbox slightly smaller than sprite
-      this.enemySprite.height * 0.6
-    );
     
-    // Scale and flip - Enemy faces LEFT
+    // Create as PHYSICS sprite from the start (not add.sprite then add physics)
+    this.enemySprite = this.physics.add.sprite(enemyX, enemyY, enemySpriteKey);
+    
+    // Configure sprite
     this.enemySprite.setScale(1.875);
-    this.enemySprite.setFlipX(false); // Enemy NOT flipped to face left
+    this.enemySprite.setFlipX(false);
     this.enemySprite.setDepth(10 + this.enemyGridY);
     this.enemySprite.setOrigin(0.5, 1);
+    
+    // Configure physics body
+    const enemyBody = this.enemySprite.body as Phaser.Physics.Arcade.Body;
+    enemyBody.setImmovable(true);      // Won't get knocked around
+    enemyBody.allowGravity = false;    // No falling
+    enemyBody.setSize(
+      this.enemySprite.width * 0.5,
+      this.enemySprite.height * 0.5
+    );
     
     // Enemy idle animation
     this.tweens.add({
@@ -317,12 +321,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private setupCombat() {
-    // Create projectile group
-    this.projectiles = this.physics.add.group({
-      classType: Projectile,
-      maxSize: 10,
-      runChildUpdate: true,
-    });
+    // Create projectile group (plain sprites, no custom classType)
+    this.projectiles = this.physics.add.group();
 
     // Setup collision between projectiles and enemy
     this.physics.add.overlap(
@@ -337,30 +337,34 @@ export class BattleScene extends Phaser.Scene {
     this.attackKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
   }
 
-      private shootProjectile() {
+  private shootProjectile() {
     if (!this.canAttack) return;
 
-    // Get player sprite's actual visual position (not grid calculation)
     const playerX = this.playerSprite.x;
-    const playerY = this.playerSprite.y - 50; // Spawn at center of sprite (not feet)
+    const playerY = this.playerSprite.y - 50;
 
-    // Create projectile at player position
-    const projectile = new Projectile(this, playerX, playerY, 10);
-    this.projectiles.add(projectile);
+    // Add to group FIRST, then configure
+    const projectile = this.physics.add.sprite(playerX, playerY, 'projectile');
+    this.projectiles.add(projectile); // Add to group first
+    
+    projectile.setDepth(50);
+    projectile.setData('damage', 10);
+    projectile.setActive(true);
+    projectile.setVisible(true);
+    
+    // Set velocity AFTER adding to group
+    (projectile.body as Phaser.Physics.Arcade.Body).setVelocityX(400);
 
-    // Fire projectile to the right
-    projectile.fire(400, 0); // 400 pixels/second to the right
+    // Play shoot sound
+    this.createSimpleSound(800, 0.1, 0.3);
 
-    // Play simple beep sound
-    this.createSimpleSound(800, 0.1, 0.3); // 800Hz beep
-
-    // Set cooldown
+    // Cooldown
     this.canAttack = false;
     this.time.delayedCall(this.attackCooldown, () => {
       this.canAttack = true;
     });
 
-    // Destroy projectile if it goes off screen
+    // Destroy if off screen
     this.time.delayedCall(2000, () => {
       if (projectile.active) {
         projectile.destroy();
@@ -371,20 +375,34 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private hitEnemy(projectileObj: any, enemyObj: any) {
-    const projectile = projectileObj as Projectile;
-    projectile.destroy();
+    // Immediately disable physics body to stop movement
+    projectileObj.body.enable = false;
+    
+    // Hide immediately
+    projectileObj.setActive(false);
+    projectileObj.setVisible(false);
+    
+    // Then destroy on next frame
+    this.time.delayedCall(0, () => {
+      projectileObj.destroy();
+    });
 
-    const damage = projectile.getDamage();
+    // Read damage
+    const damage = projectileObj.getData('damage') ?? 10;
     this.enemyHP = Math.max(0, this.enemyHP - damage);
 
     console.log(`🎯 Hit! Enemy HP: ${this.enemyHP}/${this.enemyMaxHP}`);
 
     // Play hit sound
-    this.createSimpleSound(400, 0.15, 0.5); // 400Hz thud
+    this.createSimpleSound(400, 0.15, 0.5);
 
+    // Blink effect on enemy
     this.blinkSprite(this.enemySprite);
+
+    // Show damage number
     this.showDamageNumber(this.enemySprite.x, this.enemySprite.y - 60, damage);
 
+    // Check if enemy defeated
     if (this.enemyHP <= 0) {
       console.log('💀 Enemy defeated!');
       this.time.delayedCall(1000, () => {
@@ -394,15 +412,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private blinkSprite(sprite: Phaser.GameObjects.Sprite) {
-    // Blink 3 times
+    // Kill any existing blink tweens first
+    this.tweens.killTweensOf(sprite);
+    sprite.setAlpha(1); // Reset before starting
+    
     this.tweens.add({
       targets: sprite,
       alpha: 0,
       duration: 100,
       yoyo: true,
-      repeat: 5, // 3 full blinks (off-on-off-on-off-on)
+      repeat: 5,
       onComplete: () => {
-        sprite.setAlpha(1); // Ensure it's visible at the end
+        sprite.setAlpha(1); // Guarantee visible at end
       }
     });
   }
