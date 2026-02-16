@@ -128,7 +128,6 @@ export class BattleScene extends Phaser.Scene {
         const x = this.gridOffsetX + col * GRID.TILE_WIDTH;
         const y = this.gridOffsetY + row * GRID.TILE_HEIGHT;
         
-        // Determine tile color based on ownership
         let color: number;
         let borderColor: number;
         if (col < GRID.PLAYER_COLS) {
@@ -139,7 +138,6 @@ export class BattleScene extends Phaser.Scene {
           borderColor = 0xf57c7c; // Lighter red border
         }
 
-        // Draw the main tile face (top surface)
         this.gridGraphics.fillStyle(color, 0.7);
         this.gridGraphics.fillRect(
           x + 2, 
@@ -150,7 +148,6 @@ export class BattleScene extends Phaser.Scene {
         
         // Only draw depth for BOTTOM ROW (row 2)
         if (row === GRID.ROWS - 1) {
-          // Draw depth/shadow (right edge for perspective)
           this.gridGraphics.fillStyle(color, 0.4);
           this.gridGraphics.beginPath();
           this.gridGraphics.moveTo(x + GRID.TILE_WIDTH - 2, y + 2);
