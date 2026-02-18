@@ -96,11 +96,10 @@ export class BattleScene extends Phaser.Scene {
     
     this.cursors = this.input.keyboard!.createCursorKeys();
     
-    // Update instructions text
     const instructions = this.add.text(
       this.cameras.main.centerX,
       550,
-      'Arrow Keys: Move | Z: Attack | ENTER: Next Round',  // Updated text
+      'Arrow Keys: Move | Z: Attack | ENTER: Next Round',
       {
         fontSize: '18px',
         color: '#2ecc71',
@@ -115,7 +114,7 @@ export class BattleScene extends Phaser.Scene {
     
     // Calculate grid dimensions with perspective
     const gridWidth = GRID.COLS * GRID.TILE_WIDTH;
-    const gridHeight = GRID.ROWS * GRID.TILE_HEIGHT + GRID.TILE_DEPTH; // Only one depth for bottom
+    const gridHeight = GRID.ROWS * GRID.TILE_HEIGHT + GRID.TILE_DEPTH;
     
     // Center the grid
     this.gridOffsetX = (this.cameras.main.width - gridWidth) / 2;
@@ -124,7 +123,6 @@ export class BattleScene extends Phaser.Scene {
     // Draw tiles with isometric perspective (like MMBN)
     for (let row = 0; row < GRID.ROWS; row++) {
       for (let col = 0; col < GRID.COLS; col++) {
-        // Calculate position - NO DEPTH between rows, only at bottom
         const x = this.gridOffsetX + col * GRID.TILE_WIDTH;
         const y = this.gridOffsetY + row * GRID.TILE_HEIGHT;
         
