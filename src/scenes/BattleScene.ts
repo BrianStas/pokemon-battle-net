@@ -88,8 +88,6 @@ export class BattleScene extends Phaser.Scene {
       }
     );
 
-    //we got it done, yay
-
     this.createBattleGrid();
     
     this.createPokemonSprites();
