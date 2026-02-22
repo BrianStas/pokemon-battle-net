@@ -108,7 +108,7 @@ export class BootScene extends Phaser.Scene {
 
     this.input.keyboard?.once('keydown-SPACE', () => {
       console.log('🎮 Going to character select!');
-      this.scene.start('CharacterSelectScene'); // Changed from 'BattleScene'
+      this.scene.start('CharacterSelectScene');
     });
   }
 }

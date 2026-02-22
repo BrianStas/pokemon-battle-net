@@ -21,7 +21,7 @@ export class BattleScene extends Phaser.Scene {
   private attackKey!: Phaser.Input.Keyboard.Key;
   private projectiles!: Phaser.Physics.Arcade.Group;
   private canAttack: boolean = true;
-  private attackCooldown: number = 500; // 500ms cooldown between attacks
+  private attackCooldown: number = 500;
   private enemyHP: number = 100;
   private enemyMaxHP: number = 100;
   
