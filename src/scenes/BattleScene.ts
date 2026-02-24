@@ -368,6 +368,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private hitEnemy(projectileObj: any, enemyObj: any) {
+    // Guard: if already destroyed or no body, skip (prevents multiple collision callbacks)
+    if (!projectileObj || !projectileObj.body || !projectileObj.body.enable) return;
+
     // Immediately disable physics body to stop movement
     projectileObj.body.enable = false;
     
