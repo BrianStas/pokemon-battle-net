@@ -43,9 +43,8 @@ export const COLORS = {
 export const MOVEMENT = {
   SPEED: 200, // Milliseconds per tile movement
   PLAYER_MIN_COL: 0,
-  PLAYER_MAX_COL: 2, // Player can't go past column 2 (stays on blue side)
+  PLAYER_MAX_COL: 2, 
   ENEMY_MIN_COL: 3,
-  ENEMY_MAX_COL: 5, // Enemy can't go past column 3 (stays on red side)
-  MIN_ROW: 0,
+  ENEMY_MAX_COL: 5, 
   MAX_ROW: 2,
 } as const;
