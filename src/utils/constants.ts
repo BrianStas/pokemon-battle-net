@@ -39,8 +39,6 @@ export const COLORS = {
   HP_BAR_BG: 0x2c3e50,
 } as const;
 
-//on vacation and the internet is trash so this will be sparse til the weekend
-
 // Movement configuration
 export const MOVEMENT = {
   SPEED: 200, // Milliseconds per tile movement
