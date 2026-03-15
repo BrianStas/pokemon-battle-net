@@ -39,8 +39,6 @@ export const COLORS = {
   HP_BAR_BG: 0x2c3e50,
 } as const;
 
-//the grass is green
-
 // Movement configuration
 export const MOVEMENT = {
   SPEED: 200, // Milliseconds per tile movement
