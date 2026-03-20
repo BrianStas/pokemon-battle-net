@@ -29,6 +29,8 @@ export const PROGRESSION = {
   DIFFICULTY_SCALING: 1.15,
 } as const;
 
+//starting back up soon
+
 export const COLORS = {
   PLAYER_TILE: 0x4a90e2,
   ENEMY_TILE: 0xe74c3c,
