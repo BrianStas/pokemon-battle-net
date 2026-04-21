@@ -51,6 +51,8 @@ export class BattleScene extends Phaser.Scene {
       }
     });
 
+//this is a comment
+
     this.createProjectileSprite();
     
     this.load.on('progress', (value: number) => {
