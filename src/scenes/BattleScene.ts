@@ -52,8 +52,6 @@ export class BattleScene extends Phaser.Scene {
     });
 
     this.createProjectileSprite();
-    
-//nailing the green grass
 
     this.load.on('progress', (value: number) => {
       console.log(`Loading: ${Math.floor(value * 100)}%`);
